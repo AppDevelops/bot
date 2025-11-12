@@ -8,6 +8,34 @@ import os
 import random
 import datetime
 
+import aiohttp
+from aiohttp import web
+
+async def health_check(request):
+  return web.Response(text="OK", status=200)
+
+async def start_web_server():
+  app = web.Application()
+  app.router.add_get('/health', health_check) # Health Check API 추가
+  runner = web.AppRunner(app)
+  await runner.setup()
+  site = web.TCPSite(runner, '0.0.0.0', 8000)
+  await site.start()
+
+import aiohttp
+from aiohttp import web
+
+async def health_check(request):
+  return web.Response(text="OK", status=200)
+
+async def start_web_server():
+  app = web.Application()
+  app.router.add_get('/health', health_check) # Health Check API 추가
+  runner = web.AppRunner(app)
+  await runner.setup()
+  site = web.TCPSite(runner, '0.0.0.0', 8000)
+  await site.start()
+
 # --- 설정 ---
 # ⚠️ 주의: 봇을 실행하기 전에 아래 'YOUR_BOT_TOKEN' 부분을 실제 봇 토큰으로 교체하세요.
 TOKEN = "MTQwOTc5NTgwMDQwNTYzOTMwMQ.G-uNj_.sU8b3q7ZTWuhy3F6vfucEADqIDrt8i7nyig6Vs"
@@ -1337,4 +1365,5 @@ if __name__ == "__main__":
         except discord.LoginFailure:
             print("❌ 오류: 토큰이 유효하지 않거나 로그인에 실패했습니다. 토큰을 확인해주세요.")
         except Exception as e:
+
             print(f"❌ 봇 실행 중 치명적인 오류 발생: {type(e).__name__}: {e}")
