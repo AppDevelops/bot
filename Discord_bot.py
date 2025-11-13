@@ -51,7 +51,7 @@ WHITELIST_IDS = ["925603847269937183", "1406986519587328080", "12660013998381466
              "1160542995863576646", "1294462091725508610", "1038769191903305748", "1342787003481063515"]
 
 # 송금 수수료 (고정 차감)
-TRANSFER_FEE = 0
+TRANSFER_FEE = 2
 # 🌟 신규/수정 기능 설정
 ATTENDANCE_REWARD = 1  # 출석 체크 기본 보상 포인트
 DAILY_BONUS_REWARD = 3  # 7회 연속 출석 시 추가 보너스 포인트
@@ -684,7 +684,35 @@ async def level_up(interaction: discord.Interaction):
         f"⬆️ **Lv.{current_level}**에서 **Lv.{current_level + 1}**로 레벨업 성공!\n"
         f"💸 **{LEVEL_UP_COST}** 포인트가 차감되었습니다. (남은 포인트: {data['points'][uid]}점)"
     )
+# --- 🌟 관리자 전용 /레벨업 명령어 ---
+@bot.tree.command(name="레벨업", description="특정 유저의 레벨을 강제로 올립니다. (봇 운영자 전용)")
+@app_commands.describe(user="레벨을 올릴 유저", amount="올릴 레벨 수")
+async def level_up_admin(interaction: discord.Interaction, user: discord.Member, amount: int = 1):
+    # 봇 운영자 ID 확인
+    if not is_admin(str(interaction.user.id)):
+        return await interaction.response.send_message(
+            "❌ 이 명령어는 **봇 운영자**만 사용할 수 있습니다. (ADMIN_IDS 확인 필요)", ephemeral=True
+        )
 
+    # 레벨 수 유효성 검사
+    if amount <= 0:
+        return await interaction.response.send_message("올릴 레벨 수는 1 이상이어야 합니다.", ephemeral=True)
+
+    uid = str(user.id)
+    current_level = get_user_level(uid)
+    new_level = current_level + amount
+
+    # 레벨 데이터 초기화 확인 및 업데이트
+    if "level" not in data:
+        data["level"] = {}
+
+    data["level"][uid] = new_level
+    save_data(data)
+
+    await interaction.response.send_message(
+        f"**[관리자 전용]** {user.display_name}님의 레벨을 **{amount}**만큼 올렸습니다.\n"
+        f"➡️ **Lv.{current_level}**에서 **Lv.{new_level}**로 변경되었습니다."
+    )
 
 # ===== 2. 상점 관련 =====
 @bot.tree.command(name="상점변경", description="상점 아이템의 가격을 변경합니다. (관리자 전용)")
@@ -1129,7 +1157,6 @@ async def 수뇌부명단(interaction: discord.Interaction):
 
     embed = discord.Embed(title="🏛 수뇌부 명단", description="\n".join(members), color=discord.Color.gold())
     await interaction.response.send_message(embed=embed)
-'''
 
 # === 인사 보고서 ===
 @bot.tree.command(name="인사보고서", description="인사 혹은 상/벌점 보고서를 전송합니다.")
@@ -1275,6 +1302,18 @@ async def 집합훈련보고서(interaction: discord.Interaction, organizer: str
     await channel.send(content=MENTION_STR, embed=embed)
     await interaction.response.send_message("✅ 집합/훈련 보고서가 전송되었습니다.", ephemeral=True)
 
+# ===== 8. 환영 / 작별 메시지 =====
+@bot.event
+async def on_member_join(member):
+    # 'general' 채널을 찾습니다. 서버마다 이름이 다를 수 있으므로 ID를 사용하거나 환경에 맞게 조정하는 것이 좋습니다.
+    # 여기서는 'general'이라는 이름을 가진 텍스트 채널을 찾아봅니다.
+    channel = discord.utils.get(member.guild.text_channels, name="general")
+    if channel:
+        try:
+            await channel.send(f"👋 **{member.mention}**님, 서버에 오신 것을 환영합니다! 🎉")
+        except discord.Forbidden:
+            print(f"❌ '{channel.name}' 채널에 메시지 전송 권한이 없습니다.")
+'''
 
 # 🌟 포인트 순위표 명령어
 @bot.tree.command(name="순위표", description="서버 포인트 전체 순위표를 확인합니다 (최대 10위)")
@@ -1328,21 +1367,6 @@ async def leaderboard(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
-
-
-# ===== 8. 환영 / 작별 메시지 =====
-@bot.event
-async def on_member_join(member):
-    # 'general' 채널을 찾습니다. 서버마다 이름이 다를 수 있으므로 ID를 사용하거나 환경에 맞게 조정하는 것이 좋습니다.
-    # 여기서는 'general'이라는 이름을 가진 텍스트 채널을 찾아봅니다.
-    channel = discord.utils.get(member.guild.text_channels, name="general")
-    if channel:
-        try:
-            await channel.send(f"👋 **{member.mention}**님, 서버에 오신 것을 환영합니다! 🎉")
-        except discord.Forbidden:
-            print(f"❌ '{channel.name}' 채널에 메시지 전송 권한이 없습니다.")
-
-
 @bot.event
 async def on_member_remove(member):
     # 'general' 채널을 찾습니다.
@@ -1367,3 +1391,4 @@ if __name__ == "__main__":
         except Exception as e:
 
             print(f"❌ 봇 실행 중 치명적인 오류 발생: {type(e).__name__}: {e}")
+
