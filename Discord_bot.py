@@ -685,7 +685,7 @@ async def level_up(interaction: discord.Interaction):
         f"💸 **{LEVEL_UP_COST}** 포인트가 차감되었습니다. (남은 포인트: {data['points'][uid]}점)"
     )
 # --- 🌟 관리자 전용 /레벨업 명령어 ---
-@bot.tree.command(name="레벨업", description="특정 유저의 레벨을 강제로 올립니다. (봇 운영자 전용)")
+@bot.tree.command(name="관리자 레벨업", description="특정 유저의 레벨을 강제로 올립니다. (봇 운영자 전용)")
 @app_commands.describe(user="레벨을 올릴 유저", amount="올릴 레벨 수")
 async def level_up_admin(interaction: discord.Interaction, user: discord.Member, amount: int = 1):
     # 봇 운영자 ID 확인
@@ -1391,4 +1391,5 @@ if __name__ == "__main__":
         except Exception as e:
 
             print(f"❌ 봇 실행 중 치명적인 오류 발생: {type(e).__name__}: {e}")
+
 
